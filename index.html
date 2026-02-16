@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Motivation</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Segoe UI, sans-serif;
+}
+
+body{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    overflow:hidden;
+    background-color:#000;
+    transition: background 0.5s ease;
+}
+
+/* Particle canvas */
+#particles{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+}
+
+/* Glass card */
+.container{
+    position:relative;
+    z-index:1;
+    width:90%;
+    max-width:520px;
+    padding:30px;
+    border-radius:18px;
+    backdrop-filter: blur(14px);
+    background:rgba(0,0,0,0.65);
+    text-align:center;
+    box-shadow:0 0 30px rgba(0,0,0,0.9);
+}
+
+/* Titles */
+h1{
+    color:#00eaff;
+    margin-bottom:8px;
+}
+h2{
+    color:#ffffffaa;
+    font-weight:400;
+    margin-bottom:25px;
+}
+
+/* Quote text */
+#randomMessage{
+    font-size:22px;
+    color:white;
+    min-height:80px;
+    line-height:1.5;
+    margin-bottom:25px;
+    padding:15px;
+    border:2px solid black;
+    border-radius:12px;
+    background:rgba(0,0,0,0.6);
+    text-shadow:2px 2px 6px rgba(0,0,0,0.8);
+    box-shadow:0 0 15px rgba(0,0,0,0.8);
+    transition:.3s;
+}
+
+/* Buttons */
+button{
+    padding:12px 28px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(45deg,#00eaff,#0077ff);
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:.25s;
+    margin:5px;
+}
+button:hover{
+    transform:scale(1.08);
+    box-shadow:0 0 18px #00eaff;
+}
+button:active{
+    transform:scale(.95);
+}
+
+/* Responsive font */
+@media screen and (max-width:480px){
+    #randomMessage{ font-size:18px; }
+    h1{ font-size:22px; }
+    h2{ font-size:16px; }
+    button{ font-size:14px; padding:10px 22px; }
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<div class="container">
+    <h1>Motivational Lines</h1>
+    <h2>Denish tharu</h2>
+
+    <p id="randomMessage">Loading motivation...</p>
+
+    <button onclick="generateMessage()">New Motivation</button>
+</div>
+
+<!-- -------------------- BACKGROUND AUDIO -------------------- -->
+<audio id="bgAudio" autoplay loop>
+  <source src="https://raw.githubusercontent.com/Ryukazi/Host-audio/dfadb3f7474c490bc0a6ad68e4e3f1cabc74ede9/audios/audios-1755622800169.mp4" type="audio/mp4">
+  Your browser does not support the audio element.
+</audio>
+
+<script>
+// -------------------- CHARACTER SET HERE --------------------
+const characterName = "shi hao"; // Change this to any character you want
+
+// -------------------- LOAD RANDOM IMAGE FROM API --------------------
+async function loadCharacterImage(){
+    try{
+        const res = await fetch(`https://denish-pin.vercel.app/api/search-download?query=${encodeURIComponent(characterName)}`);
+        const data = await res.json();
+
+        if(data.count && data.data && data.data.length > 0){
+            const randomImg = data.data[Math.floor(Math.random()*data.data.length)];
+            document.body.style.background = `url('${randomImg}') no-repeat center center`;
+            document.body.style.backgroundSize = "cover";
+        } else {
+            console.log("No images found for character:", characterName);
+        }
+    }catch(e){
+        console.log("Failed to fetch character image:", e);
+    }
+}
+loadCharacterImage(); // load on page load
+
+// -------------------- LOAD ONLY 1 MOTIVATIONAL QUOTE --------------------
+let quoteLoaded = false;
+async function generateMessage(){
+    if(quoteLoaded) return; // prevent duplicates
+    quoteLoaded = true;
+
+    const msg = document.getElementById("randomMessage");
+    msg.innerText = "Loading...";
+
+    try{
+        const res = await fetch("https://motivational-api-theta.vercel.app/random");
+        let quote = "";
+
+        try{
+            const data = await res.json();
+            quote =
+                data.quote ||
+                data.message ||
+                data.text ||
+                data.line ||
+                data.motivation ||
+                Object.values(data)[0];
+        }
+        catch{
+            quote = await res.text();
+        }
+
+        msg.innerText = quote;
+
+    }catch{
+        msg.innerText="Failed to load motivation 😢";
+    }
+}
+generateMessage(); // load quote on page load
+
+// -------------------- PARTICLE EFFECT --------------------
+const canvas = document.getElementById("particles");
+const ctx = canvas.getContext("2d");
+let width, height;
+function resizeCanvas(){
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const particlesArray = [];
+const particleCount = 120;
+
+class Particle {
+    constructor(){
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.radius = Math.random()*2+1;
+        this.speedX = (Math.random()-0.5)*0.5;
+        this.speedY = (Math.random()-0.5)*0.5;
+    }
+    draw(){
+        ctx.beginPath();
+        ctx.arc(this.x,this.y,this.radius,0,Math.PI*2);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fill();
+    }
+    update(){
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if(this.x<0) this.x=width;
+        if(this.x>width) this.x=0;
+        if(this.y<0) this.y=height;
+        if(this.y>height) this.y=0;
+    }
+}
+for(let i=0;i<particleCount;i++){
+    particlesArray.push(new Particle());
+}
+function animate(){
+    ctx.clearRect(0,0,width,height);
+    for(let p of particlesArray){
+        p.update();
+        p.draw();
+    }
+    requestAnimationFrame(animate);
+}
+animate();
+</script>
+
+</body>
+</html>
